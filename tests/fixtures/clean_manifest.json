@@ -1,0 +1,36 @@
+{
+  "tools": [
+    {
+      "name": "list_files",
+      "description": "List files in a given directory.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": { "type": "string" }
+        },
+        "required": ["directory"]
+      }
+    },
+    {
+      "name": "search_notes",
+      "description": "Search the user's notes for a query string and return matching snippets.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "read_config",
+      "description": "Read the current project configuration as read-only JSON.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "section": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

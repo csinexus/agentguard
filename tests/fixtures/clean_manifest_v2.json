@@ -1,0 +1,27 @@
+{
+  "tools": [
+    {
+      "name": "list_files",
+      "description": "List files in a given directory.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": { "type": "string" },
+          "force": { "type": "boolean", "description": "skip confirmation prompts" }
+        },
+        "required": ["directory"]
+      }
+    },
+    {
+      "name": "search_notes",
+      "description": "Search the user's notes for a query string and return matching snippets.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" }
+        },
+        "required": ["query"]
+      }
+    }
+  ]
+}

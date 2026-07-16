@@ -1,0 +1,46 @@
+# AgentGuard default detector rules.
+# Each rule is a pure function of (ToolDeclaration) -> RiskFlag[].
+# See core/detectors/engine.py for the matching semantics of each field.
+
+- id: INJ-001
+  name: "Embedded instruction override"
+  severity: critical
+  applies_to: description
+  pattern: '(?i)(ignore (all )?previous instructions|disregard (the )?system prompt|always call this (tool|function) first)'
+  message: "Tool description contains language resembling a prompt-injection payload."
+
+- id: SCOPE-001
+  name: "Destructive verb without confirmation language"
+  severity: high
+  applies_to: description
+  keywords_any: [delete, remove, drop, wipe, purge, truncate]
+  requires_absence_of: [confirm, "dry-run", "read-only", "requires approval"]
+  message: "Tool appears able to perform destructive actions with no confirmation step mentioned."
+
+- id: SCOPE-002
+  name: "Name/description capability mismatch"
+  severity: high
+  applies_to: schema
+  condition: "name_implies_readonly AND schema_has_write_params"
+  message: "Tool name suggests read-only, but its input schema accepts write-shaped parameters."
+
+- id: SECRET-001
+  name: "Hardcoded credential pattern in schema default"
+  severity: critical
+  applies_to: schema
+  pattern: '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["\x27][A-Za-z0-9_\-]{16,}'
+  message: "Schema default value looks like a hardcoded credential."
+
+- id: ENC-001
+  name: "Suspicious encoded payload in description"
+  severity: low
+  applies_to: description
+  pattern: '[A-Za-z0-9+/]{40,}={0,2}'
+  message: "Description contains a long base64-like string -- verify it isn't a hidden payload."
+
+- id: ENC-002
+  name: "Suspicious encoded payload in schema"
+  severity: low
+  applies_to: schema
+  pattern: '[A-Za-z0-9+/]{40,}={0,2}'
+  message: "Input schema contains a long base64-like string (e.g. in a default/example value) -- verify it isn't a hidden payload."
