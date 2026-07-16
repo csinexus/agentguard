@@ -31,11 +31,15 @@ same boundary in-tool.
 ## Install
 
 ```bash
+git clone https://github.com/csinexus/agentguard.git
+cd agentguard
 pip install -e .
 ```
 
 This installs the `agentguard` console script (plus `click`, `pyyaml`,
-`rich`, and the official `mcp` SDK as dependencies).
+`rich`, and the official `mcp` SDK as dependencies). PyPI packaging
+(`pip install agentguard` without cloning first) is planned but not
+published yet.
 
 ## Quickstart
 
