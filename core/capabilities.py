@@ -17,7 +17,7 @@ from core.models import Capability, ToolDeclaration
 # tool's name + description (case-insensitive).
 _VERB_HINTS: dict[Capability, list[str]] = {
     Capability.READ: ["read", "get", "fetch", "list", "query", "search", "describe", "view", "show", "lookup"],
-    Capability.WRITE: ["write", "create", "update", "set", "modify", "edit", "insert", "append", "save", "upload"],
+    Capability.WRITE: ["write", "create", "update", "set", "modify", "edit", "insert", "append", "save", "upload", "move", "rename", "copy"],
     Capability.DELETE: ["delete", "remove", "drop", "wipe", "purge", "truncate", "destroy"],
     Capability.EXECUTE: ["execute", "run", "invoke", "call", "spawn", "exec", "eval"],
     Capability.NETWORK_EGRESS: ["fetch", "request", "download", "send", "post", "webhook", "http", "browse", "navigate"],

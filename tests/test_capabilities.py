@@ -36,3 +36,16 @@ def test_capability_override_replaces_inference():
     tool = ToolDeclaration(name="mystery_tool", description="Does something opaque.")
     capabilities.tag_tool(tool, overrides={"mystery_tool": ["execute"]})
     assert tool.inferred_capabilities == [Capability.EXECUTE]
+
+
+def test_infers_write_from_move_and_rename():
+    # Found by scanning the real @modelcontextprotocol/server-filesystem
+    # reference server: move_file got zero inferred capabilities because
+    # neither "move" nor "rename" was in the WRITE verb hint list, even
+    # though moving/renaming a file is clearly a data-modifying operation.
+    tool = ToolDeclaration(
+        name="move_file",
+        description="Move or rename files and directories. Can move files between directories and rename them in a single operation.",
+    )
+    caps, _ = capabilities.infer_capabilities(tool)
+    assert Capability.WRITE in caps
