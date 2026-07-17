@@ -15,6 +15,7 @@ If you're new here, read **Scope** below first, then **Install** and
 
 ## Table of contents
 
+- [Project status](#project-status)
 - [Scope](#scope)
 - [Requirements](#requirements)
 - [Install](#install)
@@ -29,6 +30,27 @@ If you're new here, read **Scope** below first, then **Install** and
 - [Getting help](#getting-help)
 - [Project layout](#project-layout)
 - [Development](#development)
+
+## Project status
+
+Pre-1.0, actively developed. Concretely, as of the latest commit:
+
+- **61 automated tests** pass, covering unit-level detector/capability
+  logic, the full CLI end-to-end, an adversarial security-hardening pass
+  (terminal-injection prevention, malformed-input handling, a stress test
+  against a deliberately hostile MCP server), and known-limitation
+  regression tests (see [Known limitations](#known-limitations)).
+- **CI is green** on every push -- check the badge above or
+  [Actions](https://github.com/csinexus/agentguard/actions) for the current
+  status, not just this paragraph's word for it.
+- **Tested against a real, independently-built MCP server**
+  (`@modelcontextprotocol/server-filesystem`, the official reference
+  implementation), not just self-authored test fixtures. That test caught
+  and fixed a real bug (`move_file` was getting zero inferred capabilities
+  because "move"/"rename" weren't in the write-verb heuristic). This is one
+  server, not an exhaustive survey -- if you scan something and the result
+  looks wrong, please [open an issue](#getting-help).
+- **Not yet on PyPI** -- see [Install](#install).
 
 ## Scope
 
