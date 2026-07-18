@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -109,6 +110,34 @@ def test_scan_unreachable_live_endpoint_gives_clean_error():
     result = runner.invoke(cli, ["scan", "http://127.0.0.1:1/mcp"])
     assert result.exit_code != 0
     assert "Traceback" not in result.output
+
+
+def test_scan_spinner_is_ascii_safe_for_legacy_console_encodings():
+    # Regression test: Rich's default "dots" spinner uses Unicode braille
+    # glyphs that raise UnicodeEncodeError when the console's encoding is a
+    # legacy Windows codepage (cp1252 etc. -- common outside Windows
+    # Terminal), crashing the entire scan over a spinner animation.
+    # Reproduced live against the real CLI on this exact machine; fixed by
+    # switching to the "line" spinner. Guard against a future regression by
+    # asserting every frame of the configured spinner survives a strict
+    # cp1252 round-trip.
+    import inspect
+
+    from rich._spinners import SPINNERS
+
+    from cli.commands import scan as scan_module
+
+    source = inspect.getsource(scan_module._maybe_spinner)
+    # Extract the spinner= argument actually used, rather than hardcoding
+    # "line" twice, so this test fails loudly if someone changes it without
+    # checking encoding-safety.
+    match = re.search(r'spinner="(\w+)"', source)
+    assert match, "expected _maybe_spinner to pass an explicit spinner= name"
+    spinner_name = match.group(1)
+
+    frames = SPINNERS[spinner_name]["frames"]
+    for frame in frames:
+        frame.encode("cp1252")  # raises UnicodeEncodeError if this regresses
 
 
 def test_rules_add_rejects_broken_pack_and_does_not_install_it(tmp_path):

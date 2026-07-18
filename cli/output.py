@@ -5,12 +5,13 @@ import json
 import re
 
 import click
+from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from core.baseline import DriftReport
-from core.models import ServerSnapshot, Severity
+from core.models import Capability, ServerSnapshot, Severity
 
 _SEVERITY_STYLE = {
     Severity.INFO: "dim",
@@ -18,6 +19,18 @@ _SEVERITY_STYLE = {
     Severity.HIGH: "bold orange3",
     Severity.CRITICAL: "bold red",
 }
+
+_CAPABILITY_STYLE = {
+    Capability.READ: "green",
+    Capability.WRITE: "yellow",
+    Capability.DELETE: "bold red",
+    Capability.EXECUTE: "bold magenta",
+    Capability.NETWORK_EGRESS: "cyan",
+    Capability.FINANCIAL: "bold red",
+    Capability.AUTH: "bold blue",
+}
+
+_TABLE_BOX = box.ROUNDED
 
 # Tool names (and server names derived from them) come straight from
 # whatever MCP server is being scanned -- fully attacker-controlled. Two
@@ -53,25 +66,57 @@ def _flag_text(flags, min_rank: int) -> Text:
     return out
 
 
+def _capability_badges(capabilities: list[Capability]) -> Text:
+    if not capabilities:
+        return Text("-", style="dim")
+    out = Text()
+    for i, cap in enumerate(capabilities):
+        if i:
+            out.append(" ")
+        out.append(f" {cap.value} ", style=f"{_CAPABILITY_STYLE[cap]} reverse")
+    return out
+
+
 def render_scan(snapshots: list[ServerSnapshot], fmt: str, severity_min: str) -> None:
     if fmt == "json":
         click.echo(json.dumps([s.to_dict() for s in snapshots], indent=2))
         return
 
+    from cli.banner import print_banner
+
     min_rank = Severity(severity_min).rank
     console = Console()
+    print_banner(console)
+
+    severity_counts: dict[Severity, int] = {s: 0 for s in Severity}
+    tool_count = 0
+
     for snap in snapshots:
         title = Text()
         title.append_text(_safe_text(snap.server_name))
         title.append_text(Text.from_markup(f"  [dim]({snap.transport})[/]"))
-        table = Table(title=title, show_lines=True)
+        table = Table(title=title, show_lines=True, box=_TABLE_BOX, header_style="bold cyan", title_style="bold")
         table.add_column("Tool", style="bold")
         table.add_column("Capabilities")
         table.add_column("Risk flags")
         for tool in snap.tools:
-            caps = ", ".join(c.value for c in tool.inferred_capabilities) or "-"
-            table.add_row(_safe_text(tool.name), caps, _flag_text(tool.risk_flags, min_rank))
+            tool_count += 1
+            for flag in tool.risk_flags:
+                severity_counts[flag.severity] += 1
+            table.add_row(_safe_text(tool.name), _capability_badges(tool.inferred_capabilities), _flag_text(tool.risk_flags, min_rank))
         console.print(table)
+
+    _print_summary(console, severity_counts, tool_count)
+
+
+def _print_summary(console: Console, severity_counts: dict[Severity, int], tool_count: int) -> None:
+    parts = []
+    for sev in (Severity.CRITICAL, Severity.HIGH, Severity.LOW, Severity.INFO):
+        count = severity_counts.get(sev, 0)
+        if count:
+            parts.append(f"[{_SEVERITY_STYLE[sev]}]{count} {sev.value}[/]")
+    summary = ", ".join(parts) if parts else "[bold green]0 flags[/]"
+    console.print(Text.from_markup(f"\n  {tool_count} tool(s) scanned -- {summary}\n"))
 
 
 def _joined_safe_text(values: list[str]) -> Text:
@@ -105,7 +150,7 @@ def render_diff(report: DriftReport, fmt: str) -> None:
     for drift in report.server_drifts:
         if not drift.has_drift:
             continue
-        table = Table(title=_safe_text(drift.server_name), show_lines=True)
+        table = Table(title=_safe_text(drift.server_name), show_lines=True, box=_TABLE_BOX, header_style="bold cyan", title_style="bold")
         table.add_column("Change")
         table.add_column("Tool")
         table.add_column("Detail")
